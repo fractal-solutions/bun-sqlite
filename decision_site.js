@@ -58,25 +58,35 @@ Bun.serve({
           }
         }
 
-        case "cs_faculty": {
-          // Get all CS faculty members
-          // Faculty data is replicated on both sites, so we can query either
-          const response = await fetch(`${SITE1_URL}/cs_faculty`);
-          return response;
+        case "faculty_members": {
+          if (department !== "CS") {
+                //NON CS get all faculty members of a course given courseId?
+                        return new Response("Only CS department queries are supported", { status: 400 });
+          } else {
+            // Get all CS faculty members
+            // Faculty data is replicated on both sites, so we can query either
+            const response = await fetch(`${SITE1_URL}/cs_faculty`);
+            return response;
+          }
         }
 
         case "faculty_students": {
-          // Get students under a CS faculty member
-          // Need to check both sites since students are split by year
-          const [site1Response, site2Response] = await Promise.all([
-            fetch(`${SITE1_URL}/faculty_students?facultyId=${facultyId}`),
-            fetch(`${SITE2_URL}/faculty_students?facultyId=${facultyId}`)
-          ]);
+          if (department !== "CS") {
+                //NON CS get students under a faculty member
+                        return new Response("Only CS department queries are supported", { status: 400 });
+          } else {
+            // Get students under a CS faculty member
+            // Need to check both sites since students are split by year
+            const [site1Response, site2Response] = await Promise.all([
+                fetch(`${SITE1_URL}/faculty_students?facultyId=${facultyId}`),
+                fetch(`${SITE2_URL}/faculty_students?facultyId=${facultyId}`)
+            ]);
 
-          // Combine results from both sites
-          const site1Data = await site1Response.json();
-          const site2Data = await site2Response.json();
-          return Response.json([...site1Data, ...site2Data]);
+            // Combine results from both sites
+            const site1Data = await site1Response.json();
+            const site2Data = await site2Response.json();
+            return Response.json([...site1Data, ...site2Data]);
+          }
         }
 
         default:
