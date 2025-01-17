@@ -15,6 +15,7 @@ Bun.serve({
     const queryType = url.searchParams.get("queryType");
     const year = parseInt(url.searchParams.get("year") || "0");
     const courseId = url.searchParams.get("courseId");
+    const courseName = url.searchParams.get("courseName");
     const facultyId = url.searchParams.get("facultyId");
     const credits = parseInt(url.searchParams.get("credits") || "0");
     
@@ -98,5 +99,9 @@ Bun.serve({
     }
   }
 });
-
 console.log("Decision site running on port 3000");
+
+import {server1Start} from "./site1";
+import {server2Start} from "./site2";
+// server1Start();
+// server2Start();

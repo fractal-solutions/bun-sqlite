@@ -197,4 +197,87 @@ importJuniorCSStudents();
 importCSIncompleteEnrollments();
 importCSFaculty();
 importBasicCSCourses(); 
+server2Start();
+
+// Start HTTP server for Site 2
+export function server2Start() {
+
+    Bun.serve({
+        port: 3002,
+        async fetch(req) {
+          const url = new URL(req.url);
+          const path = url.pathname;
+          const courseId = url.searchParams.get("courseId");
+          const facultyId = url.searchParams.get("facultyId");
+      
+          try {
+            switch (path) {
+              case "/course_enrollments": {
+                // Get number of students enrolled in a basic CS course
+                const query = `
+                  SELECT COUNT(DISTINCT e.s_id) as enrollment_count
+                  FROM enrollments e
+                  JOIN courses c ON e.c_id = c.c_id
+                  JOIN faculty f ON c.f_id = f.f_id
+                  WHERE c.c_id = ? 
+                  AND f.department = 'CS'
+                  AND c.credits <= 2`;
+      
+                const result = db.query(query).get(courseId);
+                return Response.json(result);
+              }
+      
+              case "/course_enrollment_details": {
+                // Get detailed enrollment info for incomplete enrollments
+                const query = `
+                  SELECT s.s_id, s.name as student_name, e.date, c.name as course_name
+                  FROM enrollments e
+                  JOIN students s ON e.s_id = s.s_id
+                  JOIN courses c ON e.c_id = c.c_id
+                  WHERE c.c_id = ? 
+                  AND e.status = 'NOT DONE'`;
+      
+                const results = db.query(query).all(courseId);
+                return Response.json(results);
+              }
+      
+              case "/cs_faculty": {
+                // Get all CS faculty members (replicated data)
+                const query = `
+                  SELECT * 
+                  FROM faculty 
+                  WHERE department = 'CS'`;
+      
+                const results = db.query(query).all();
+                return Response.json(results);
+              }
+      
+              case "/faculty_students": {
+                // Get junior students (year <= 2) under a CS faculty member
+                const query = `
+                  SELECT DISTINCT s.* 
+                  FROM students s
+                  JOIN enrollments e ON s.s_id = e.s_id
+                  JOIN courses c ON e.c_id = c.c_id
+                  JOIN faculty f ON c.f_id = f.f_id
+                  WHERE f.f_id = ?
+                  AND s.department = 'CS'
+                  AND s.year <= 2`;
+      
+                const results = db.query(query).all(facultyId);
+                return Response.json(results);
+              }
+      
+              default:
+                return new Response("Not Found", { status: 404 });
+            }
+          } catch (error) {
+            console.error("Error processing request:", error);
+            return new Response("Internal Server Error", { status: 500 });
+          }
+        }
+      });
+      
+}
+console.log("Site 2 running on port 3002"); 
 

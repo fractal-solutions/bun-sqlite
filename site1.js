@@ -69,6 +69,9 @@ async function importSeniorCSStudents() {
         
         // Commit transaction
         db.query('COMMIT');
+        // Get count of imported students
+        const studentCount = db.query('SELECT COUNT(*) as count FROM students').get();
+        console.log(`Total students in table: ${studentCount.count}`);
         
         console.log(`Successfully imported ${seniorCSStudents.length} senior CS students to site1`);
     } catch (error) {
@@ -114,6 +117,9 @@ async function importCSCompletedEnrollments() {
 
         // Commit transaction
         db.query('COMMIT');
+        // Get count of imported enrollments
+        const enrollmentCount = db.query('SELECT COUNT(*) as count FROM enrollments').get();
+        console.log(`Total completed enrollments in table: ${enrollmentCount.count}`);
 
         console.log(`Successfully imported ${csCompletedEnrollments.length} completed enrollments for CS students to site1`);
     } catch (error) {
@@ -141,6 +147,11 @@ async function importCSFaculty() {
         
         // Commit transaction
         db.query('COMMIT');
+
+        // Get count of cs faculty members
+        const membersCount = db.query('SELECT COUNT(*) as count FROM faculty').get();
+        console.log(`Total completed enrollments in table: ${membersCount.count}`);
+        
         
         console.log(`Successfully imported ${csFaculty.length} CS faculty members to site1`);
     } catch (error) {
@@ -184,6 +195,12 @@ async function importAdvancedCSCourses() {
 
         // Commit transaction
         db.query('COMMIT');
+        
+
+        // Get count of imported enrollments
+        const coursesCount = db.query('SELECT COUNT(*) as count FROM courses').get();
+        console.log(`Total advanced courses in table: ${coursesCount.count}`);
+        
 
         console.log(`Successfully imported ${advancedCSCourses.length} advanced CS courses to site1`);
     } catch (error) {
@@ -198,3 +215,84 @@ importSeniorCSStudents();
 importCSCompletedEnrollments();
 importCSFaculty();
 importAdvancedCSCourses(); 
+server1Start();
+// Start HTTP server for Site 1
+export function server1Start() {
+    Bun.serve({
+        port: 3001,
+        async fetch(req) {
+          const url = new URL(req.url);
+          const path = url.pathname;
+          const courseId = url.searchParams.get("courseId");
+          const facultyId = url.searchParams.get("facultyId");
+      
+          try {
+            switch (path) {
+              case "/course_enrollments": {
+                // Get number of students enrolled in an advanced CS course
+                const query = `
+                  SELECT COUNT(DISTINCT e.s_id) as enrollment_count
+                  FROM enrollments e
+                  JOIN courses c ON e.c_id = c.c_id
+                  JOIN faculty f ON c.f_id = f.f_id
+                  WHERE c.c_id = ? 
+                  AND f.department = 'CS'
+                  AND c.credits > 2`;
+      
+                const result = db.query(query).get(courseId);
+                return Response.json(result);
+              }
+      
+              case "/course_enrollment_details": {
+                // Get detailed enrollment info for completed enrollments
+                const query = `
+                  SELECT s.s_id, s.name as student_name, e.date, c.name as course_name
+                  FROM enrollments e
+                  JOIN students s ON e.s_id = s.s_id
+                  JOIN courses c ON e.c_id = c.c_id
+                  WHERE c.c_id = ? 
+                  AND e.status = 'DONE'`;
+      
+                const results = db.query(query).all(courseId);
+                return Response.json(results);
+              }
+      
+              case "/cs_faculty": {
+                // Get all CS faculty members
+                const query = `
+                  SELECT * 
+                  FROM faculty 
+                  WHERE department = 'CS'`;
+      
+                const results = db.query(query).all();
+                return Response.json(results);
+              }
+      
+              case "/faculty_students": {
+                // Get senior students (year > 2) under a CS faculty member
+                const query = `
+                  SELECT DISTINCT s.* 
+                  FROM students s
+                  JOIN enrollments e ON s.s_id = e.s_id
+                  JOIN courses c ON e.c_id = c.c_id
+                  JOIN faculty f ON c.f_id = f.f_id
+                  WHERE f.f_id = ?
+                  AND s.department = 'CS'
+                  AND s.year > 2`;
+      
+                const results = db.query(query).all(facultyId);
+                return Response.json(results);
+              }
+      
+              default:
+                return new Response("Not Found", { status: 404 });
+            }
+          } catch (error) {
+            console.error("Error processing request:", error);
+            return new Response("Internal Server Error", { status: 500 });
+          }
+        }
+      });
+      
+}
+console.log("Site 1 running on port 3001"); 
