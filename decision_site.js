@@ -19,9 +19,9 @@ Bun.serve({
     const credits = parseInt(url.searchParams.get("credits") || "0");
     
     // Only handle CS department queries for now
-    if (department !== "CS") {
-      return new Response("Only CS department queries are supported", { status: 400 });
-    }
+    // if (department !== "CS") {
+    //   return new Response("Only CS department queries are supported", { status: 400 });
+    // }
 
     try {
       // Route request based on query type and parameters
