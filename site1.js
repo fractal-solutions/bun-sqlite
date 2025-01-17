@@ -29,7 +29,7 @@ db.query(`CREATE TABLE IF NOT EXISTS students (
 
 // Create enrollment table if it doesn't exist (junction table between students and courses)
 db.query(`CREATE TABLE IF NOT EXISTS enrollments (
-    enrollment_id INTEGER PRIMARY KEY,
+    e_id INTEGER PRIMARY KEY,
     s_id INTEGER,
     c_id INTEGER,
     date DATE DEFAULT CURRENT_TIMESTAMP,

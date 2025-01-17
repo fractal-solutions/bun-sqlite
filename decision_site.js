@@ -27,25 +27,35 @@ Bun.serve({
       // Route request based on query type and parameters
       switch (queryType) {
         case "course_enrollments": {
-          // Get number of students enrolled in a CS course
-          // Route based on course credits
-          const targetUrl = credits > 2 ? SITE1_URL : SITE2_URL;
-          const response = await fetch(`${targetUrl}/course_enrollments?courseId=${courseId}`);
-          return response;
+          if (department !== "CS") {
+            //NON CS course enrollment request(Get number of students enrolled for a course given courseId?)
+                    return new Response("Only CS department queries are supported", { status: 400 });
+          } else {
+            // CS Get number of students enrolled in a CS course
+            // Route based on course credits
+            const targetUrl = credits > 2 ? SITE1_URL : SITE2_URL;
+            const response = await fetch(`${targetUrl}/course_enrollments?courseId=${courseId}`);
+            return response;
+          }
         }
 
         case "course_enrollment_details": {
-          // Get detailed enrollment info for a course
-          // Need to check both sites since enrollments are split by status
-          const [site1Response, site2Response] = await Promise.all([
-            fetch(`${SITE1_URL}/course_enrollment_details?courseId=${courseId}`),
-            fetch(`${SITE2_URL}/course_enrollment_details?courseId=${courseId}`)
-          ]);
+          if (department !== "CS") {
+                //NON CS detailed enrollment info for a course (student, date) a course given courseId?)
+                        return new Response("Only CS department queries are supported", { status: 400 });
+          } else {
+            // Get detailed enrollment info for a course
+            // Need to check both sites since enrollments are split by status
+            const [site1Response, site2Response] = await Promise.all([
+                fetch(`${SITE1_URL}/course_enrollment_details?courseId=${courseId}`),
+                fetch(`${SITE2_URL}/course_enrollment_details?courseId=${courseId}`)
+            ]);
 
-          // Combine results from both sites
-          const site1Data = await site1Response.json();
-          const site2Data = await site2Response.json();
-          return Response.json([...site1Data, ...site2Data]);
+            // Combine results from both sites
+            const site1Data = await site1Response.json();
+            const site2Data = await site2Response.json();
+            return Response.json([...site1Data, ...site2Data]);
+          }
         }
 
         case "cs_faculty": {
