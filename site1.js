@@ -1,5 +1,5 @@
 //SITE 1 IS PRIMARILY CS
-
+ 
 import { Database } from "bun:sqlite";
 const db = new Database("site1.sqlite", { create: true });
 
